@@ -40,6 +40,20 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.constraintlayout.compose.android)
+    
+    // Navigation dependencies
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation.ui)
+    implementation(libs.androidx.navigation.dynamic.features.fragment)
+    androidTestImplementation(libs.androidx.navigation.testing)
+    
+    // JSON serialization
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.constraintlayout)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -55,5 +69,6 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
+    implementation(libs.coil.compose)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
