@@ -11,11 +11,11 @@ class GameViewModel : ViewModel() {
 
     private val _searchQuery = mutableStateOf("")
     val searchQuery: State<String> = _searchQuery
-    
+
     fun getGameById(id: String): Game? {
         return repository.getGameById(id)
     }
-    
+
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
         repository.searchGames(query)

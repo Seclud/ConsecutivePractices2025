@@ -41,8 +41,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun NavGraph(navController: NavHostController) {
     Scaffold(
-        bottomBar = { 
-            BottomNavBar(navController = navController) 
+        bottomBar = {
+            BottomNavBar(navController = navController)
         }
     ) { innerPadding ->
         NavHost(
@@ -90,11 +90,11 @@ fun BottomNavBar(navController: NavHostController) {
         Screen.Screen2,
         Screen.Screen3
     )
-    
+
     androidx.compose.material3.NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
-        
+
         items.forEach { screen ->
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = null) },

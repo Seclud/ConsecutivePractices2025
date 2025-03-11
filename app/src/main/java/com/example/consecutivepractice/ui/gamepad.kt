@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-public val Gamepad: ImageVector
+val Gamepad: ImageVector
     get() {
         if (_Gamepad != null) {
             return _Gamepad!!
