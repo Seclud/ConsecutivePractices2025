@@ -1,7 +1,6 @@
 package com.example.consecutivepractice
 
 import android.util.Log
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.example.consecutivepractice.api.GamesApi
 import com.example.consecutivepractice.models.Game
@@ -13,36 +12,30 @@ class GameRepository(
     private val api: GamesApi
 ) {
     private val _games = mutableStateOf<List<Game>>(emptyList())
-    val games: State<List<Game>> = _games
 
     private val _loading = mutableStateOf(false)
-    val loading: State<Boolean> = _loading
 
     private val _error = mutableStateOf<String?>(null)
-    val error: State<String?> = _error
 
     private val _gameDetails = mutableStateOf<GameDetailsResponse?>(null)
-    val gameDetails: State<GameDetailsResponse?> = _gameDetails
 
     private val _detailsLoading = mutableStateOf(false)
-    val detailsLoading: State<Boolean> = _detailsLoading
 
     private val _detailsError = mutableStateOf<String?>(null)
-    val detailsError: State<String?> = _detailsError
 
-    suspend fun fetchGames(page: Int = 2, pageSize: Int = 20) {
-        fetchGamesInternal(page, pageSize, null)
+    suspend fun fetchGames(page: Int = 2, pageSize: Int = 20): List<Game> {
+        return fetchGamesInternal(page, pageSize, null)
     }
 
-    suspend fun searchGames(query: String) {
-        if (query.isEmpty()) {
+    suspend fun searchGames(query: String): List<Game> {
+        return if (query.isEmpty()) {
             fetchGames()
         } else {
             fetchGamesInternal(1, 20, query)
         }
     }
 
-    private suspend fun fetchGamesInternal(page: Int, pageSize: Int, search: String?) {
+    private suspend fun fetchGamesInternal(page: Int, pageSize: Int, search: String?): List<Game> {
         _loading.value = true
         _error.value = null
 
@@ -54,6 +47,7 @@ class GameRepository(
             if (response.isSuccessful) {
                 response.body()?.let { gamesResponse ->
                     _games.value = gamesResponse.results
+                    return gamesResponse.results
                 } ?: run {
                     _error.value = "Пустой ответ"
                 }
@@ -65,6 +59,8 @@ class GameRepository(
         } finally {
             _loading.value = false
         }
+
+        return emptyList()
     }
 
     suspend fun getGameById(id: Int) {

@@ -10,7 +10,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
     private const val BASE_URL = "https://api.rawg.io/api/"
-    private const val API_KEY = "###"
+    private const val API_KEY = "fb6ca962884743498800663a38c928e9"
 
     fun createOkHttpClient(context: Context): OkHttpClient {
         return OkHttpClient.Builder()

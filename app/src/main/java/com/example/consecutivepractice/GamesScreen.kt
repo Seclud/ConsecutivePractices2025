@@ -2,6 +2,7 @@ package com.example.consecutivepractice
 
 import android.util.Log
 import android.widget.TextView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -30,6 +32,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,53 +48,99 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.consecutivepractice.models.Developer
 import com.example.consecutivepractice.models.Game
+import com.example.consecutivepractice.ui.FilterList
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun GamesScreen(
     viewModel: GameViewModel = viewModel(),
     onGameClick: (String) -> Unit
 ) {
-    val games = viewModel.gamesList.value
-    val isLoading = viewModel.loading.value
-    val error = viewModel.error.value
-    val searchQuery = viewModel.searchQuery.value
+    val uiState by viewModel.uiState.collectAsState()
+    
+    var showFilterScreen by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        SearchBar(searchQuery, viewModel::onSearchQueryChanged)
+    if (showFilterScreen) {
+        GameFilterScreen(
+            onBackClick = { showFilterScreen = false },
+            onApplyFilters = { minRating, genre, onlyRecent ->
+                viewModel.applyFilters(minRating, genre, onlyRecent)
+                showFilterScreen = false
+            }
+        )
+    } else {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SearchBar(
+                query = uiState.searchQuery,
+                onQueryChanged = viewModel::onSearchQueryChanged,
+                onFilterClick = { showFilterScreen = true },
+            )
 
-        when {
-            isLoading -> LoadingIndicator()
-            error != null -> ErrorMessage(error)
-            games.isEmpty() -> EmptyStateMessage("Игр не найдено")
-            else -> GamesList(games, onGameClick, viewModel)
+            when {
+                uiState.isLoading -> LoadingIndicator()
+                uiState.errorMessage != null -> ErrorMessage(uiState.errorMessage!!)
+                uiState.filteredGames.isEmpty() -> EmptyStateMessage("Игр не найдено")
+                else -> GamesList(uiState.filteredGames, onGameClick, viewModel)
+            }
         }
     }
 }
 
 @Composable
-private fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChanged,
+private fun SearchBar(
+    query: String,
+    onQueryChanged: (String) -> Unit,
+    onFilterClick: () -> Unit,
+) {
+    val shouldShowBadge by com.example.consecutivepractice.di.FilterBadgeCache.shouldShowBadge.collectAsState()
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        label = { Text("Поиск игр") },
-        singleLine = true,
-        leadingIcon = {
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Поиск")
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChanged("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear search"
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChanged,
+            modifier = Modifier.weight(1f),
+            label = { Text("Поиск игр") },
+            singleLine = true,
+            leadingIcon = {
+                Icon(imageVector = Icons.Default.Search, contentDescription = "Поиск")
+            },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { onQueryChanged("") }) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Очистить поиск"
+                        )
+                    }
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        IconButton(onClick = onFilterClick) {
+            Box {
+                Icon(
+                    imageVector = FilterList,
+                    contentDescription = "Фильтры"
+                )
+
+                if (shouldShowBadge) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .align(Alignment.TopEnd)
+                            .background(MaterialTheme.colorScheme.error, CircleShape)
                     )
                 }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -135,17 +188,22 @@ fun GameCard(game: Game, onClick: () -> Unit, viewModel: GameViewModel) {
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
+        var description by remember { mutableStateOf<String?>(null) }
+        var developers by remember { mutableStateOf<List<Developer>?>(null) }
+        var isLoadingDescription by remember { mutableStateOf(true) }
+        var isLoadingDevelopers by remember { mutableStateOf(true) }
+
         LaunchedEffect(game.id) {
-            viewModel.getGameDescription(game.id)
-            viewModel.getGameDevelopers(game.id)
+            viewModel.getGameDescription(game.id) { desc ->
+                description = desc
+                isLoadingDescription = false
+            }
+            
+            viewModel.getGameDevelopers(game.id) { devs ->
+                developers = devs
+                isLoadingDevelopers = false
+            }
         }
-
-        val description = viewModel.gameDescriptions[game.id]
-        val developers = viewModel.gameDevelopers[game.id]
-        val isLoadingDescription = viewModel.loadingDescriptions[game.id] == true
-        val isLoadingDevelopers = viewModel.loadingDevelopers[game.id] == true
-
-        Log.e("GameScreenDevelopers of game ${game.id}", developers.toString())
 
         Column(modifier = Modifier.padding(16.dp)) {
             GameHeader(game)
