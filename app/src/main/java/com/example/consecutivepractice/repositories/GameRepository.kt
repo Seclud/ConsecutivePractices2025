@@ -1,4 +1,4 @@
-package com.example.consecutivepractice
+package com.example.consecutivepractice.repositories
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf

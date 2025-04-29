@@ -46,6 +46,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.material.icons.extended)
     ksp("androidx.room:room-compiler:2.7.0")
 
     implementation(libs.retrofit.core)

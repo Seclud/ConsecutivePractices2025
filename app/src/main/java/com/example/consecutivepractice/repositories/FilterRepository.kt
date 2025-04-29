@@ -1,4 +1,4 @@
-package com.example.consecutivepractice
+package com.example.consecutivepractice.repositories
 
 import android.app.Application
 import android.content.Context
@@ -11,7 +11,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-class FilterRepository(private val application: Application) {
+class FilterRepository(application: Application) {
     private val sharedPreferences =
         application.getSharedPreferences(FILTER_PREFERENCES, Context.MODE_PRIVATE)
 

@@ -1,4 +1,4 @@
-package com.example.consecutivepractice
+package com.example.consecutivepractice.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -21,8 +21,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -62,8 +64,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.consecutivepractice.models.Game
 import com.example.consecutivepractice.models.GameDetailsResponse
-import com.example.consecutivepractice.ui.Computer
-import com.example.consecutivepractice.ui.Gamepad
+import com.example.consecutivepractice.viewmodels.FavoritesViewModel
+import com.example.consecutivepractice.viewmodels.GameViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -305,7 +307,7 @@ fun GameDetailsScreen(
                                         label = { Text(platformWrapper.platform.name) },
                                         leadingIcon = {
                                             Icon(
-                                                imageVector = Gamepad,
+                                                Icons.Default.Gamepad,
                                                 contentDescription = null,
                                                 Modifier.size(18.dp)
                                             )
@@ -533,7 +535,7 @@ fun DeveloperInfoItem(name: String, role: String) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Computer,
+                Icons.Default.Computer,
                 contentDescription = null,
                 modifier = Modifier.size(36.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
