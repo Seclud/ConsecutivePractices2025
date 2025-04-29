@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -42,20 +43,25 @@ android {
 dependencies {
     implementation(libs.androidx.constraintlayout.compose.android)
 
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp("androidx.room:room-compiler:2.7.0")
+
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.gson)
 
     debugImplementation(libs.chucker)
     releaseImplementation(libs.chucker.no.op)
     
-    // Navigation dependencies
+
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.navigation.dynamic.features.fragment)
     androidTestImplementation(libs.androidx.navigation.testing)
     
-    // JSON serialization
+
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.androidx.runtime.livedata)

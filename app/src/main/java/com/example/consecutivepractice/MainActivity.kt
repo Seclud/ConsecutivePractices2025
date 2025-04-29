@@ -14,11 +14,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.*
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.consecutivepractice.ui.theme.ConsecutivePracticeTheme
 
 class MainActivity : ComponentActivity() {
@@ -58,14 +60,21 @@ fun NavGraph(navController: NavHostController) {
                     }
                 )
             }
+            composable(Screen.Favorites.route) {
+                FavoritesScreen(
+                    onBackClick = {
+                        navController.navigate(Screen.Games.route) {
+                            popUpTo(navController.graph.startDestinationId)
+                            launchSingleTop = true
+                        }
+                    },
+                    onGameClick = { gameId ->
+                        navController.navigate(Screen.createRoute(gameId))
+                    }
+                )
+            }
             composable(Screen.Screen1.route) {
                 PlaceholderScreen(screenName = "Screen 1")
-            }
-            composable(Screen.Screen2.route) {
-                PlaceholderScreen(screenName = "Screen 2")
-            }
-            composable(Screen.Screen3.route) {
-                PlaceholderScreen(screenName = "Screen 3")
             }
             composable(
                 route = "game/{gameId}",
@@ -87,9 +96,8 @@ fun NavGraph(navController: NavHostController) {
 fun BottomNavBar(navController: NavHostController) {
     val items = listOf(
         Screen.Games,
+        Screen.Favorites,
         Screen.Screen1,
-        Screen.Screen2,
-        Screen.Screen3
     )
 
     androidx.compose.material3.NavigationBar {

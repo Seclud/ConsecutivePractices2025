@@ -1,101 +1,126 @@
 package com.example.consecutivepractice
 
 import android.app.Application
-import android.util.Log
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.consecutivepractice.Network.RetrofitInstance
 import com.example.consecutivepractice.models.Developer
 import com.example.consecutivepractice.models.Game
 import com.example.consecutivepractice.models.GameDetailsResponse
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val api = RetrofitInstance.getGamesApi(application.applicationContext)
     private val repository = GameRepository(api)
+    private val filterRepository = FilterRepository(application)
 
-    val gamesList: State<List<Game>> = repository.games
-    val loading: State<Boolean> = repository.loading
-    val error: State<String?> = repository.error
+    private val _uiState = MutableStateFlow(GameUiState())
+    val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
-    val gameDetails: State<GameDetailsResponse?> = repository.gameDetails
-    val detailsLoading: State<Boolean> = repository.detailsLoading
-    val detailsError: State<String?> = repository.detailsError
-
-    private val _gameDescriptions = mutableStateMapOf<Int, String?>()
-    val gameDescriptions: Map<Int, String?> = _gameDescriptions
-
-    private val _gameDevelopers = mutableStateMapOf<Int, List<Developer>?>()
-    val gameDevelopers: Map<Int, List<Developer>?> = _gameDevelopers
-
-    private val _loadingDevelopers = mutableStateMapOf<Int, Boolean>()
-    val loadingDevelopers: Map<Int, Boolean> = _loadingDevelopers
-
-    private val _loadingDescriptions = mutableStateMapOf<Int, Boolean>()
-    val loadingDescriptions: Map<Int, Boolean> = _loadingDescriptions
-
-    private val _searchQuery = mutableStateOf("")
-    val searchQuery: State<String> = _searchQuery
+    private val detailsCache = mutableMapOf<Int, GameDetailsResponse>()
+    private val loadingDetails = mutableSetOf<Int>()
 
     init {
+        fetchGames()
+
         viewModelScope.launch {
-            repository.fetchGames()
+            filterRepository.hasCustomFilters.collect { hasCustomFilters ->
+                _uiState.update { it.copy(filtersApplied = hasCustomFilters) }
+                updateFilteredGames()
+            }
         }
     }
 
-    fun getGameDetails(id: Int) {
+    fun fetchGames() {
         viewModelScope.launch {
-            repository.getGameById(id)
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            val gamesList = repository.fetchGames()
+            _uiState.update {
+                it.copy(
+                    allGames = gamesList,
+                    isLoading = false
+                )
+            }
+
+            updateFilteredGames()
         }
     }
 
     fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
         viewModelScope.launch {
-            repository.searchGames(query)
+            _uiState.update {
+                it.copy(
+                    searchQuery = query,
+                    isLoading = true
+                )
+            }
+
+            val results = repository.searchGames(query)
+            _uiState.update {
+                it.copy(
+                    allGames = results,
+                    isLoading = false
+                )
+            }
+
+            updateFilteredGames()
         }
     }
 
-    fun getGameDescription(gameId: Int) {
-        if (_gameDescriptions.containsKey(gameId) || _loadingDescriptions[gameId] == true) {
+    fun applyFilters(minRating: Float, genre: String, onlyRecent: Boolean) {
+        filterRepository.saveFilters(minRating, genre, onlyRecent)
+        updateFilteredGames()
+    }
+
+    private fun updateFilteredGames() {
+        val currentState = _uiState.value
+        val filteredList = if (currentState.filtersApplied) {
+            filterRepository.filterGames(currentState.allGames)
+        } else {
+            currentState.allGames
+        }
+
+        _uiState.update { it.copy(filteredGames = filteredList) }
+    }
+
+    fun getGameDetails(gameId: Int, onComplete: (GameDetailsResponse?) -> Unit = {}) {
+        if (detailsCache.containsKey(gameId)) {
+            onComplete(detailsCache[gameId])
             return
         }
 
-        _loadingDescriptions[gameId] = true
+        if (loadingDetails.contains(gameId)) return
 
+        loadingDetails.add(gameId)
         viewModelScope.launch {
-            try {
-                val details = repository.getGameDetailsOnce(gameId)
-                _gameDescriptions[gameId] = details?.description
-            } catch (e: Exception) {
-                Log.e("GameViewModel", "Error loading game $gameId description", e)
-                _gameDescriptions[gameId] = null
-            } finally {
-                _loadingDescriptions[gameId] = false
+            val details = repository.getGameDetailsOnce(gameId)
+            if (details != null) {
+                detailsCache[gameId] = details
             }
+            onComplete(details)
+            loadingDetails.remove(gameId)
         }
     }
 
-    fun getGameDevelopers(gameId: Int) {
-        if (_gameDevelopers.containsKey(gameId) || _loadingDevelopers[gameId] == true) {
-            return
-        }
+    fun getGameDescription(gameId: Int, onResult: (String?) -> Unit) {
+        getGameDetails(gameId) { details -> onResult(details?.description) }
+    }
 
-        _loadingDevelopers[gameId] = true
-
-        viewModelScope.launch {
-            try {
-                val details = repository.getGameDetailsOnce(gameId)
-                _gameDevelopers[gameId] = details?.developers
-            } catch (e: Exception) {
-                Log.e("GameViewModel", "Error loading game $gameId developers", e)
-                _gameDevelopers[gameId] = null
-            } finally {
-                _loadingDevelopers[gameId] = false
-            }
-        }
+    fun getGameDevelopers(gameId: Int, onResult: (List<Developer>?) -> Unit) {
+        getGameDetails(gameId) { details -> onResult(details?.developers) }
     }
 }
+
+data class GameUiState(
+    val allGames: List<Game> = emptyList(),
+    val filteredGames: List<Game> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val searchQuery: String = "",
+    val filtersApplied: Boolean = false
+)
