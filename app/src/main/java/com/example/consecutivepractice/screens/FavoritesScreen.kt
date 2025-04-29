@@ -1,4 +1,4 @@
-package com.example.consecutivepractice
+package com.example.consecutivepractice.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +44,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.consecutivepractice.models.Developer
 import com.example.consecutivepractice.models.Game
+import com.example.consecutivepractice.viewmodels.FavoritesViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,7 +60,7 @@ fun FavoritesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Favorites") },
+                title = { Text("Избранное") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -112,7 +113,7 @@ private fun EmptyFavoritesScreen(paddingValues: PaddingValues) {
             .padding(paddingValues),
         contentAlignment = Alignment.Center
     ) {
-        Text("You don't have any favorite games yet")
+        Text("Вы еще не выбрали избранные игры")
     }
 }
 
@@ -189,9 +190,9 @@ fun FavoriteGameCard(
                     )
 
                     val platformsText =
-                        game.platforms?.joinToString(", ") { it.platform.name } ?: "Unknown"
+                        game.platforms?.joinToString(", ") { it.platform.name } ?: "Неизвестно"
                     Text(
-                        text = "Platforms: $platformsText",
+                        text = "Платформы: $platformsText",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -201,7 +202,7 @@ fun FavoriteGameCard(
 
             when {
                 isLoadingDescription -> Text(
-                    text = "Loading...",
+                    text = "Загрузка...",
                     style = MaterialTheme.typography.bodySmall
                 )
 
@@ -212,7 +213,7 @@ fun FavoriteGameCard(
                 )
 
                 else -> Text(
-                    text = "No description available",
+                    text = "Описание недоступно",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -220,11 +221,11 @@ fun FavoriteGameCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Developer info
+
             val developerText = when {
-                isLoadingDevelopers -> "Loading..."
-                developers.isNullOrEmpty() -> "Developer: Unknown"
-                else -> "Developer: ${developers!!.joinToString(", ") { it.name }}"
+                isLoadingDevelopers -> "Загрузка..."
+                developers.isNullOrEmpty() -> "Разработчик: Неизвестно"
+                else -> "Разработчик: ${developers!!.joinToString(", ") { it.name }}"
             }
             Text(
                 text = developerText,
@@ -238,12 +239,12 @@ fun FavoriteGameCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Rating: ${game.rating}",
+                    text = "Рейтинг: ${game.rating}",
                     style = MaterialTheme.typography.bodySmall
                 )
 
                 Text(
-                    text = "Release date: ${game.released ?: "N/A"}",
+                    text = "Дата выхода: ${game.released ?: "N/A"}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
