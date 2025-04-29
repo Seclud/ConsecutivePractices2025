@@ -41,6 +41,12 @@ android {
 
 dependencies {
     implementation(libs.androidx.constraintlayout.compose.android)
+
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
+
+    debugImplementation(libs.chucker)
+    releaseImplementation(libs.chucker.no.op)
     
     // Navigation dependencies
     implementation(libs.androidx.navigation.compose)
