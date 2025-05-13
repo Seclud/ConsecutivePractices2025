@@ -1,24 +1,19 @@
 package com.example.consecutivepractice.repositories
 
-import android.app.Application
 import android.content.Context
+import com.example.consecutivepractice.di.AndroidContextProvider
 import com.example.consecutivepractice.di.FilterBadgeCache
-import com.example.consecutivepractice.models.Game
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
-class FilterRepository(application: Application) {
+class FilterRepository(contextProvider: AndroidContextProvider) {
     private val sharedPreferences =
-        application.getSharedPreferences(FILTER_PREFERENCES, Context.MODE_PRIVATE)
+        contextProvider.getSharedPreferences(FILTER_PREFERENCES, Context.MODE_PRIVATE)
 
     private val _hasCustomFilters = MutableStateFlow(false)
     val hasCustomFilters: StateFlow<Boolean> = _hasCustomFilters.asStateFlow()
 
-    private val twoYearsAgo = LocalDate.now().minusYears(2)
 
     init {
         val hasCustomSettings =
@@ -65,40 +60,6 @@ class FilterRepository(application: Application) {
 
     fun resetFilters() {
         saveFilters(DEFAULT_MIN_RATING, DEFAULT_GENRE, DEFAULT_ONLY_RECENT)
-    }
-
-
-    fun filterGames(games: List<Game>): List<Game> {
-        val settings = loadFilters()
-
-        return games.filter { game ->
-            val passesRatingFilter = game.rating >= settings.minRating
-
-            val passesGenreFilter = if (settings.genre == DEFAULT_GENRE) {
-                true
-            } else {
-                game.genres?.any { it.name.equals(settings.genre, ignoreCase = true) } ?: false
-            }
-
-            val passesDateFilter = if (!settings.onlyRecent) {
-                true
-            } else {
-                val parsedDate = parseDate(game.released)
-                parsedDate != null && parsedDate.isAfter(twoYearsAgo)
-            }
-
-            passesRatingFilter && passesGenreFilter && passesDateFilter
-        }
-    }
-
-    private fun parseDate(dateString: String?): LocalDate? {
-        if (dateString.isNullOrEmpty()) return null
-
-        return try {
-            LocalDate.parse(dateString, DateTimeFormatter.ISO_DATE)
-        } catch (e: DateTimeParseException) {
-            null
-        }
     }
 
     companion object {

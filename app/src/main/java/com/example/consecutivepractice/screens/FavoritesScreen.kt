@@ -2,7 +2,6 @@ package com.example.consecutivepractice.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,33 +26,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.consecutivepractice.models.Developer
+import com.example.consecutivepractice.components.EmptyStateMessage
 import com.example.consecutivepractice.models.Game
 import com.example.consecutivepractice.viewmodels.FavoritesViewModel
-import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
-    viewModel: FavoritesViewModel = viewModel(),
+    viewModel: FavoritesViewModel = koinViewModel(),
     onBackClick: () -> Unit,
     onGameClick: (String) -> Unit
 ) {
-    // Collect UI state from the viewModel
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -95,26 +85,15 @@ fun FavoritesScreen(
 
 @Composable
 private fun LoadingScreen(paddingValues: PaddingValues) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
+    com.example.consecutivepractice.components.LoadingIndicator(contentPadding = paddingValues)
 }
 
 @Composable
 private fun EmptyFavoritesScreen(paddingValues: PaddingValues) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Вы еще не выбрали избранные игры")
-    }
+    EmptyStateMessage(
+        message = "Вы еще не выбрали избранные игры",
+        contentPadding = paddingValues
+    )
 }
 
 @Composable
@@ -147,22 +126,14 @@ fun FavoriteGameCard(
     onClick: () -> Unit,
     favoritesViewModel: FavoritesViewModel
 ) {
-    val coroutineScope = rememberCoroutineScope()
+    val uiState by favoritesViewModel.uiState.collectAsState()
 
-    var description by remember { mutableStateOf<String?>(null) }
-    var developers by remember { mutableStateOf<List<Developer>?>(null) }
-    var isLoadingDescription by remember { mutableStateOf(true) }
-    var isLoadingDevelopers by remember { mutableStateOf(true) }
 
-    LaunchedEffect(game.id) {
-        coroutineScope.launch {
-            description = favoritesViewModel.getFavoriteGameDescription(game.id)
-            developers = favoritesViewModel.getFavoriteGameDevelopers(game.id)
+    val gameDetails = uiState.gameDetailsCache[game.id]
+    val isLoading = uiState.loadingGameDetails.contains(game.id) || gameDetails == null
 
-            isLoadingDescription = false
-            isLoadingDevelopers = false
-        }
-    }
+    val description = gameDetails?.description
+    val developers = gameDetails?.developers
 
     Card(
         modifier = Modifier
@@ -199,15 +170,14 @@ fun FavoriteGameCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-
             when {
-                isLoadingDescription -> Text(
+                isLoading -> Text(
                     text = "Загрузка...",
                     style = MaterialTheme.typography.bodySmall
                 )
 
                 description != null -> HtmlText(
-                    html = description!!,
+                    html = description,
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 2
                 )
@@ -223,9 +193,9 @@ fun FavoriteGameCard(
 
 
             val developerText = when {
-                isLoadingDevelopers -> "Загрузка..."
+                isLoading -> "Загрузка..."
                 developers.isNullOrEmpty() -> "Разработчик: Неизвестно"
-                else -> "Разработчик: ${developers!!.joinToString(", ") { it.name }}"
+                else -> "Разработчик: ${developers.joinToString(", ") { it.name }}"
             }
             Text(
                 text = developerText,

@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -43,12 +42,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,43 +55,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.consecutivepractice.components.EmptyStateMessage
+import com.example.consecutivepractice.components.LoadingIndicator
 import com.example.consecutivepractice.models.Game
-import com.example.consecutivepractice.models.GameDetailsResponse
 import com.example.consecutivepractice.viewmodels.FavoritesViewModel
 import com.example.consecutivepractice.viewmodels.GameViewModel
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun GameDetailsScreen(
     gameId: String,
     onBackClick: () -> Unit = {},
-    viewModel: GameViewModel = viewModel(),
-    favoritesViewModel: FavoritesViewModel = viewModel()
+    viewModel: GameViewModel = koinViewModel(),
+    favoritesViewModel: FavoritesViewModel = koinViewModel()
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var isFavorite by remember { mutableStateOf(false) }
-    var gameDetails by remember { mutableStateOf<GameDetailsResponse?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(gameId) {
-        isLoading = true
-        error = null
+    viewModel.setGameId(gameId.toInt(), favoritesViewModel)
 
-        viewModel.getGameDetails(gameId.toInt()) { details ->
-            gameDetails = details
-            isLoading = false
-            if (details == null) {
-                error = "Failed to load game details"
-            }
-        }
-
-        isFavorite = favoritesViewModel.isGameFavorite(gameId.toInt())
-    }
+    val gameDetails = uiState.currentGameDetails
+    val isFavorite = uiState.isCurrentGameFavorite
+    val isLoading = uiState.isLoadingCurrentGame
+    val error = uiState.currentGameError
 
     val scrollState = rememberScrollState()
 
@@ -119,20 +105,20 @@ fun GameDetailsScreen(
                     onClick = {
                         coroutineScope.launch {
                             val game = Game(
-                                id = gameDetails!!.id,
-                                name = gameDetails!!.name,
-                                background_image = gameDetails!!.background_image,
-                                rating = gameDetails!!.rating,
-                                released = gameDetails!!.released,
-                                genres = gameDetails!!.genres,
-                                platforms = gameDetails!!.platforms
+                                id = gameDetails.id,
+                                name = gameDetails.name,
+                                background_image = gameDetails.background_image,
+                                rating = gameDetails.rating,
+                                released = gameDetails.released,
+                                genres = gameDetails.genres,
+                                platforms = gameDetails.platforms
                             )
                             favoritesViewModel.toggleFavorite(
                                 game = game,
-                                description = gameDetails!!.description,
-                                developers = gameDetails!!.developers
+                                description = gameDetails.description,
+                                developers = gameDetails.developers
                             )
-                            isFavorite = !isFavorite
+                            viewModel.updateCurrentGameFavoriteStatus(!isFavorite)
                         }
                     }
                 ) {
@@ -147,25 +133,14 @@ fun GameDetailsScreen(
     ) { paddingValues ->
         when {
             isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                LoadingIndicator(contentPadding = paddingValues)
             }
 
             error != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Error: $error")
-                }
+                EmptyStateMessage(
+                    message = "Error: $error",
+                    contentPadding = paddingValues
+                )
             }
 
             gameDetails != null -> {
@@ -181,10 +156,10 @@ fun GameDetailsScreen(
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(gameDetails!!.background_image)
+                                .data(gameDetails.background_image)
                                 .crossfade(true)
                                 .build(),
-                            contentDescription = "${gameDetails!!.name} cover",
+                            contentDescription = "${gameDetails.name} cover",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = androidx.compose.ui.layout.ContentScale.Crop
                         )
@@ -210,14 +185,14 @@ fun GameDetailsScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = gameDetails!!.name,
+                                    text = gameDetails.name,
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
 
                                 Text(
-                                    text = "${gameDetails!!.developers?.firstOrNull()?.name ?: "Unknown Developer"} • ${gameDetails!!.released}",
+                                    text = "${gameDetails.developers?.firstOrNull()?.name ?: "Unknown Developer"} • ${gameDetails.released}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White
                                 )
@@ -253,7 +228,7 @@ fun GameDetailsScreen(
                                     tint = Color.Yellow
                                 )
                                 Text(
-                                    text = "${gameDetails!!.rating}/5",
+                                    text = "${gameDetails.rating}/5",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -271,7 +246,7 @@ fun GameDetailsScreen(
                                 },
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            gameDetails!!.genres?.take(3)?.forEach { genre ->
+                            gameDetails.genres?.take(3)?.forEach { genre ->
                                 SuggestionChip(
                                     onClick = { },
                                     label = { Text(genre.name) }
@@ -301,7 +276,7 @@ fun GameDetailsScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                gameDetails!!.platforms!!.forEach { platformWrapper ->
+                                gameDetails.platforms!!.forEach { platformWrapper ->
                                     AssistChip(
                                         onClick = { },
                                         label = { Text(platformWrapper.platform.name) },
@@ -333,7 +308,7 @@ fun GameDetailsScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            gameDetails!!.description?.let { it1 ->
+                            gameDetails.description?.let { it1 ->
                                 HtmlText(
                                     html = it1,
                                 )
@@ -361,7 +336,7 @@ fun GameDetailsScreen(
                         )
 
                         Text(
-                            text = "${gameDetails!!.rating}/50",
+                            text = "${gameDetails.rating}/50",
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.End,
                             modifier = Modifier.constrainAs(criticsScore) {
@@ -390,7 +365,7 @@ fun GameDetailsScreen(
                         )
 
                         Text(
-                            text = "${(gameDetails!!.rating * 8).toInt()}/50",
+                            text = "${(gameDetails.rating * 8).toInt()}/50",
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.End,
                             modifier = Modifier.constrainAs(userScore) {
@@ -421,7 +396,7 @@ fun GameDetailsScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             DeveloperInfoItem(
-                                name = gameDetails!!.developers?.firstOrNull()?.name
+                                name = gameDetails.developers?.firstOrNull()?.name
                                     ?: "Unknown Developer",
                                 role = "Разработчик"
                             )
@@ -447,7 +422,7 @@ fun GameDetailsScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            val pcPlatform = gameDetails!!.platforms?.find { platformWrapper ->
+                            val pcPlatform = gameDetails.platforms?.find { platformWrapper ->
                                 platformWrapper.platform.name == "PC"
                             }
                             val pcRequirements = pcPlatform?.requirements
@@ -489,7 +464,7 @@ fun GameDetailsScreen(
                                     }
                                 } else {
                                     val hasPcPlatform =
-                                        gameDetails!!.platforms?.any { platformWrapper ->
+                                        gameDetails.platforms?.any { platformWrapper ->
                                             platformWrapper.platform.name == "PC"
                                         } ?: false
 
