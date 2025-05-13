@@ -35,6 +35,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.consecutivepractice.components.EmptyStateMessage
 import com.example.consecutivepractice.models.Game
+import com.example.consecutivepractice.viewmodels.FavoriteGameDetails
 import com.example.consecutivepractice.viewmodels.FavoritesViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -69,14 +70,13 @@ fun FavoritesScreen(
 
             uiState.favorites.isEmpty() -> {
                 EmptyFavoritesScreen(paddingValues)
-            }
-
-            else -> {
+            }            else -> {
                 FavoritesList(
                     favorites = uiState.favorites,
                     paddingValues = paddingValues,
                     onGameClick = onGameClick,
-                    favoritesViewModel = viewModel
+                    gameDetailsCache = uiState.gameDetailsCache,
+                    loadingGameDetails = uiState.loadingGameDetails
                 )
             }
         }
@@ -101,7 +101,8 @@ private fun FavoritesList(
     favorites: List<Game>,
     paddingValues: PaddingValues,
     onGameClick: (String) -> Unit,
-    favoritesViewModel: FavoritesViewModel
+    gameDetailsCache: Map<Int, FavoriteGameDetails>,
+    loadingGameDetails: Set<Int>
 ) {
     LazyColumn(
         modifier = Modifier
@@ -114,7 +115,8 @@ private fun FavoritesList(
             FavoriteGameCard(
                 game = game,
                 onClick = { onGameClick(game.id.toString()) },
-                favoritesViewModel = favoritesViewModel
+                gameDetailsCache = gameDetailsCache,
+                loadingGameDetails = loadingGameDetails
             )
         }
     }
@@ -124,13 +126,11 @@ private fun FavoritesList(
 fun FavoriteGameCard(
     game: Game,
     onClick: () -> Unit,
-    favoritesViewModel: FavoritesViewModel
+    gameDetailsCache: Map<Int, FavoriteGameDetails>,
+    loadingGameDetails: Set<Int>
 ) {
-    val uiState by favoritesViewModel.uiState.collectAsState()
-
-
-    val gameDetails = uiState.gameDetailsCache[game.id]
-    val isLoading = uiState.loadingGameDetails.contains(game.id) || gameDetails == null
+    val gameDetails = gameDetailsCache[game.id]
+    val isLoading = loadingGameDetails.contains(game.id) || gameDetails == null
 
     val description = gameDetails?.description
     val developers = gameDetails?.developers
