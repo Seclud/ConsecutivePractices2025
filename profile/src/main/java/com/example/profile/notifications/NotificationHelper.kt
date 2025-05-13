@@ -1,4 +1,4 @@
-package com.example.consecutivepractice.notifications
+package com.example.profile.notifications
 
 import android.app.AlarmManager
 import android.app.NotificationChannel
@@ -10,13 +10,14 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.example.consecutivepractice.MainActivity
-import com.example.consecutivepractice.R
+import com.example.profile.R
+import org.koin.java.KoinJavaComponent.inject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 class NotificationHelper(private val context: Context) {
+    private val activityProvider: ActivityProvider by inject(ActivityProvider::class.java)
 
     init {
         createNotificationChannel()
@@ -43,8 +44,8 @@ class NotificationHelper(private val context: Context) {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Уведомления о парах"
-            val descriptionText = "Канал уведомлений о парах"
+            val name = context.getString(R.string.notification_channel_name)
+            val descriptionText = context.getString(R.string.notification_channel_description)
             val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
@@ -164,9 +165,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun showDebugNotification(username: String) {
-        val notificationIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
+        val notificationIntent = activityProvider.getMainActivityIntent(context)
 
         val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -180,11 +179,10 @@ class NotificationHelper(private val context: Context) {
             notificationIntent,
             pendingIntentFlags
         )
-
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Тестовое уведомление")
-            .setContentText("$username, это тестовое уведомление!")
+            .setContentTitle(context.getString(R.string.notification_debug_title))
+            .setContentText(context.getString(R.string.notification_debug_text, username))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

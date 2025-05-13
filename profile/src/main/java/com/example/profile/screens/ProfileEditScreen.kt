@@ -1,4 +1,4 @@
-package com.example.consecutivepractice.screens
+package com.example.profile.screens
 
 import android.Manifest
 import android.content.Context
@@ -64,8 +64,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import coil.compose.AsyncImage
-import com.example.consecutivepractice.notifications.NotificationHelper
-import com.example.consecutivepractice.viewmodels.ProfileEditViewModel
+import com.example.profile.notifications.NotificationHelper
+import com.example.profile.viewmodels.ProfileEditViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import java.text.SimpleDateFormat

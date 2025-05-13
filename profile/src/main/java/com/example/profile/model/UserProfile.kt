@@ -1,4 +1,4 @@
-package com.example.consecutivepractice.models
+package com.example.profile.model
 
 data class UserProfile(
     val fullName: String = "",

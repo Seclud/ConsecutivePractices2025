@@ -1,4 +1,4 @@
-package com.example.consecutivepractice.screens
+package com.example.profile.screens
 
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -45,7 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.consecutivepractice.viewmodels.ProfileViewModel
+import com.example.profile.viewmodels.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

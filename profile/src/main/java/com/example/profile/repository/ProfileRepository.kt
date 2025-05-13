@@ -1,11 +1,11 @@
-package com.example.consecutivepractice.repositories
+package com.example.profile.repository
 
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
-import com.example.consecutivepractice.di.AndroidContextProvider
-import com.example.consecutivepractice.models.UserProfile
-import com.example.consecutivepractice.notifications.NotificationHelper
+import com.example.profile.di.AndroidContextProvider
+import com.example.profile.model.UserProfile
+import com.example.profile.notifications.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
+
 
 class ProfileRepository(private val contextProvider: AndroidContextProvider) {
 
@@ -95,4 +96,3 @@ class ProfileRepository(private val contextProvider: AndroidContextProvider) {
         private const val KEY_FAVORITE_CLASS_TIME = "favorite_class_time"
     }
 }
-

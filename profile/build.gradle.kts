@@ -1,22 +1,18 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "com.example.consecutivepractice"
+    namespace = "com.example.profile"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.consecutivepractice"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -41,16 +37,12 @@ android {
 }
 
 dependencies {
-
-    implementation(project(":core"))
     implementation(project(":data"))
-    implementation(project(":profile"))
 
     implementation(libs.androidx.constraintlayout.compose.android)
 
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
-    implementation(project(":profile"))
 
     testImplementation(libs.koin.test)
     testImplementation(libs.koin.test.junit4)

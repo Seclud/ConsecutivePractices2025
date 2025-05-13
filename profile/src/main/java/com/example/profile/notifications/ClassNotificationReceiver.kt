@@ -1,4 +1,4 @@
-package com.example.consecutivepractice.notifications
+package com.example.profile.notifications
 
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,10 +7,12 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.example.consecutivepractice.MainActivity
-import com.example.consecutivepractice.R
+import com.example.profile.R
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class ClassNotificationReceiver : BroadcastReceiver() {
+class ClassNotificationReceiver : BroadcastReceiver(), KoinComponent {
+    private val activityProvider: ActivityProvider by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         val username = intent.getStringExtra(NotificationHelper.EXTRA_USERNAME)
@@ -21,9 +23,7 @@ class ClassNotificationReceiver : BroadcastReceiver() {
             "Notification triggered for $username at time $classTime"
         )
 
-        val notificationIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
+        val notificationIntent = activityProvider.getMainActivityIntent(context)
 
         val pendingIntentFlags =
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -34,14 +34,16 @@ class ClassNotificationReceiver : BroadcastReceiver() {
             notificationIntent,
             pendingIntentFlags
         )
-
-        val contentText = "$username, ваша любимая пара в $classTime начинается"
-
-
         val notification = NotificationCompat.Builder(context, NotificationHelper.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Время любимой пары")
-            .setContentText(contentText)
+            .setContentTitle(context.getString(R.string.notification_title))
+            .setContentText(
+                context.getString(
+                    R.string.notification_class_text,
+                    username,
+                    classTime
+                )
+            )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
