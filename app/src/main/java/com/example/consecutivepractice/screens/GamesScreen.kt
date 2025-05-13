@@ -1,6 +1,5 @@
-package com.example.consecutivepractice
+package com.example.consecutivepractice.screens
 
-import android.util.Log
 import android.widget.TextView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,8 +48,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.consecutivepractice.models.Developer
 import com.example.consecutivepractice.models.Game
-import com.example.consecutivepractice.ui.FilterList
-import kotlinx.coroutines.flow.StateFlow
+import com.example.consecutivepractice.viewmodels.GameViewModel
 
 @Composable
 fun GamesScreen(
@@ -57,7 +56,7 @@ fun GamesScreen(
     onGameClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     var showFilterScreen by remember { mutableStateOf(false) }
 
     if (showFilterScreen) {
@@ -126,7 +125,7 @@ private fun SearchBar(
         IconButton(onClick = onFilterClick) {
             Box {
                 Icon(
-                    imageVector = FilterList,
+                    Icons.Default.FilterList,
                     contentDescription = "Фильтры"
                 )
 
@@ -198,7 +197,7 @@ fun GameCard(game: Game, onClick: () -> Unit, viewModel: GameViewModel) {
                 description = desc
                 isLoadingDescription = false
             }
-            
+
             viewModel.getGameDevelopers(game.id) { devs ->
                 developers = devs
                 isLoadingDevelopers = false

@@ -1,4 +1,4 @@
-package com.example.consecutivepractice
+package com.example.consecutivepractice.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

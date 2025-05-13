@@ -1,4 +1,4 @@
-package com.example.consecutivepractice
+package com.example.consecutivepractice.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -7,6 +7,8 @@ import com.example.consecutivepractice.Network.RetrofitInstance
 import com.example.consecutivepractice.models.Developer
 import com.example.consecutivepractice.models.Game
 import com.example.consecutivepractice.models.GameDetailsResponse
+import com.example.consecutivepractice.repositories.FilterRepository
+import com.example.consecutivepractice.repositories.GameRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -21,6 +21,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.consecutivepractice.screens.FavoritesScreen
+import com.example.consecutivepractice.screens.GameDetailsScreen
+import com.example.consecutivepractice.screens.GamesScreen
+import com.example.consecutivepractice.screens.PlaceholderScreen
+import com.example.consecutivepractice.screens.ProfileEditScreen
+import com.example.consecutivepractice.screens.ProfileScreen
 import com.example.consecutivepractice.ui.theme.ConsecutivePracticeTheme
 
 class MainActivity : ComponentActivity() {
@@ -73,6 +79,23 @@ fun NavGraph(navController: NavHostController) {
                     }
                 )
             }
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    onEditClick = {
+                        navController.navigate(Screen.PROFILE_EDIT_ROUTE)
+                    }
+                )
+            }
+            composable(Screen.PROFILE_EDIT_ROUTE) {
+                ProfileEditScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onSaveComplete = {
+                        navController.popBackStack()
+                    }
+                )
+            }
             composable(Screen.Screen1.route) {
                 PlaceholderScreen(screenName = "Screen 1")
             }
@@ -98,6 +121,7 @@ fun BottomNavBar(navController: NavHostController) {
         Screen.Games,
         Screen.Favorites,
         Screen.Screen1,
+        Screen.Profile,
     )
 
     androidx.compose.material3.NavigationBar {
