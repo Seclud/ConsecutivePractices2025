@@ -1,10 +1,11 @@
 package com.example.consecutivepractice.repositories
 
-import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.example.consecutivepractice.di.AndroidContextProvider
 import com.example.consecutivepractice.models.UserProfile
+import com.example.consecutivepractice.notifications.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,21 +15,20 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
 
-class ProfileRepository(private val application: Application) {
+class ProfileRepository(private val contextProvider: AndroidContextProvider) {
 
     private val sharedPreferences =
-        application.getSharedPreferences(PROFILE_PREFERENCES, Context.MODE_PRIVATE)
+        contextProvider.getSharedPreferences(PROFILE_PREFERENCES, Context.MODE_PRIVATE)
 
     private val _profileData = MutableStateFlow(loadProfile())
     val profileData: StateFlow<UserProfile> = _profileData.asStateFlow()
-
-
     private fun loadProfile(): UserProfile {
         return UserProfile(
             fullName = sharedPreferences.getString(KEY_FULL_NAME, "") ?: "",
             avatarUri = sharedPreferences.getString(KEY_AVATAR_URI, "") ?: "",
             resumeUrl = sharedPreferences.getString(KEY_RESUME_URL, "") ?: "",
-            jobTitle = sharedPreferences.getString(KEY_JOB_TITLE, "") ?: ""
+            jobTitle = sharedPreferences.getString(KEY_JOB_TITLE, "") ?: "",
+            favoriteClassTime = sharedPreferences.getString(KEY_FAVORITE_CLASS_TIME, "") ?: ""
         )
     }
 
@@ -39,6 +39,7 @@ class ProfileRepository(private val application: Application) {
                 putString(KEY_AVATAR_URI, profile.avatarUri)
                 putString(KEY_RESUME_URL, profile.resumeUrl)
                 putString(KEY_JOB_TITLE, profile.jobTitle)
+                putString(KEY_FAVORITE_CLASS_TIME, profile.favoriteClassTime)
                 apply()
             }
 
@@ -56,7 +57,8 @@ class ProfileRepository(private val application: Application) {
         return withContext(Dispatchers.IO) {
             try {
                 val fileName = "resume_${System.currentTimeMillis()}.pdf"
-                val outputDir = application.getExternalFilesDir(null)
+                val applicationContext = contextProvider.getApplicationContext()
+                val outputDir = applicationContext.getExternalFilesDir(null)
                 val outputFile = File(outputDir, fileName)
 
                 URL(url).openStream().use { input ->
@@ -66,8 +68,8 @@ class ProfileRepository(private val application: Application) {
                 }
 
                 FileProvider.getUriForFile(
-                    application.applicationContext,
-                    "${application.packageName}.fileprovider",
+                    applicationContext,
+                    "${applicationContext.packageName}.fileprovider",
                     outputFile
                 )
             } catch (e: Exception) {
@@ -78,12 +80,19 @@ class ProfileRepository(private val application: Application) {
         }
     }
 
+    fun scheduleClassNotification(fullName: String, classTime: String) {
+        val context = contextProvider.getApplicationContext()
+        val notificationHelper = NotificationHelper(context)
+        notificationHelper.scheduleClassNotification(fullName, classTime)
+    }
+
     companion object {
         private const val PROFILE_PREFERENCES = "profile_preferences"
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_AVATAR_URI = "avatar_uri"
         private const val KEY_RESUME_URL = "resume_url"
         private const val KEY_JOB_TITLE = "job_title"
+        private const val KEY_FAVORITE_CLASS_TIME = "favorite_class_time"
     }
 }
 
