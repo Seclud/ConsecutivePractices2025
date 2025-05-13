@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -42,15 +44,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.consecutivepractice.viewmodels.ProfileViewModel
-import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel = viewModel(),
+    viewModel: ProfileViewModel = koinViewModel(),
     onEditClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -58,37 +59,28 @@ fun ProfileScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-
-    LaunchedEffect(uiState.resumeFileUri) {
-        uiState.resumeFileUri?.let { uri ->
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/pdf")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            try {
-                context.startActivity(intent)
-                viewModel.clearResumeFile()
-            } catch (e: Exception) {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Не найдено приложение для просмотра PDF")
-                }
-                viewModel.clearResumeFile()
-            }
+    if (uiState.shouldOpenPdf && uiState.resumeFileUri != null) {
+        val uri = uiState.resumeFileUri
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try {
+            context.startActivity(intent)
+            viewModel.clearResumeFile()
+        } catch (e: Exception) {
+            viewModel.onPdfOpenFailure()
         }
     }
 
-
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { error ->
-            scope.launch {
-                snackbarHostState.showSnackbar(error)
-                viewModel.clearError()
+    if (uiState.errorMessage != null) {
+        val errorMessage = uiState.errorMessage
+        LaunchedEffect(errorMessage) {
+            if (errorMessage != null) {
+                snackbarHostState.showSnackbar(errorMessage)
             }
+            viewModel.clearError()
         }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.refreshProfile()
     }
 
     Scaffold(
@@ -123,7 +115,8 @@ fun ProfileScreen(
                         avatarUri = uiState.profile.avatarUri,
                         resumeUrl = uiState.profile.resumeUrl,
                         isDownloading = uiState.isDownloading,
-                        onResumeClick = { viewModel.downloadAndOpenResume() }
+                        onResumeClick = { viewModel.downloadAndOpenResume() },
+                        favoriteClassTime = uiState.profile.favoriteClassTime
                     )
                 }
             }
@@ -138,7 +131,8 @@ private fun ProfileContent(
     avatarUri: String,
     resumeUrl: String,
     isDownloading: Boolean,
-    onResumeClick: () -> Unit
+    onResumeClick: () -> Unit,
+    favoriteClassTime: String = ""
 ) {
     Column(
         modifier = Modifier
@@ -206,7 +200,6 @@ private fun ProfileContent(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -229,6 +222,25 @@ private fun ProfileContent(
                         } else {
                             Text("Открыть")
                         }
+                    }
+                }
+                if (favoriteClassTime.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Любимая пара: $favoriteClassTime",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }

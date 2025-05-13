@@ -43,6 +43,13 @@ android {
 dependencies {
     implementation(libs.androidx.constraintlayout.compose.android)
 
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit4)
+
+    implementation(libs.androidx.constraintlayout.compose.android)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -54,14 +61,14 @@ dependencies {
 
     debugImplementation(libs.chucker)
     releaseImplementation(libs.chucker.no.op)
-    
+
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.navigation.dynamic.features.fragment)
     androidTestImplementation(libs.androidx.navigation.testing)
-    
+
 
     implementation(libs.kotlinx.serialization.json)
 

@@ -1,15 +1,13 @@
 package com.example.consecutivepractice.data
 
-import android.app.Application
-import com.example.consecutivepractice.data.room.AppDatabase
 import com.example.consecutivepractice.data.room.FavoriteGame
 import com.example.consecutivepractice.models.Developer
 import com.example.consecutivepractice.models.Game
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class FavoritesRepository(application: Application) {
-    private val favoriteGameDao = AppDatabase.getDatabase(application).favoriteGameDao()
+class FavoritesRepository(databaseProvider: AppDatabaseProvider) {
+    private val favoriteGameDao = databaseProvider.getDatabase().favoriteGameDao()
 
 
     val allFavorites: Flow<List<Game>> = favoriteGameDao.getAllFavorites().map { favoriteGames ->

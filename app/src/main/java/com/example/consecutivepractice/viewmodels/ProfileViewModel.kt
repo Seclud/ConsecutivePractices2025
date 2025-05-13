@@ -1,8 +1,7 @@
 package com.example.consecutivepractice.viewmodels
 
-import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.consecutivepractice.models.UserProfile
 import com.example.consecutivepractice.repositories.ProfileRepository
@@ -12,15 +11,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = ProfileRepository(application)
+class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
         loadProfile()
+        refreshProfile()
     }
 
     private fun loadProfile() {
@@ -46,6 +44,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     it.copy(
                         resumeFileUri = fileUri,
                         isDownloading = false,
+                        shouldOpenPdf = fileUri != null,
                         errorMessage = if (fileUri == null) "Не удалось скачать резюме" else null
                     )
                 }
@@ -60,7 +59,17 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun clearResumeFile() {
-        _uiState.update { it.copy(resumeFileUri = null) }
+        _uiState.update { it.copy(resumeFileUri = null, shouldOpenPdf = false) }
+    }
+
+    fun onPdfOpenFailure() {
+        _uiState.update {
+            it.copy(
+                errorMessage = "Не найдено приложение для просмотра PDF",
+                resumeFileUri = null,
+                shouldOpenPdf = false
+            )
+        }
     }
 
     fun refreshProfile() {
@@ -82,5 +91,6 @@ data class ProfileUiState(
     val isLoading: Boolean = true,
     val isDownloading: Boolean = false,
     val errorMessage: String? = null,
-    val resumeFileUri: Uri? = null
+    val resumeFileUri: Uri? = null,
+    val shouldOpenPdf: Boolean = false
 )

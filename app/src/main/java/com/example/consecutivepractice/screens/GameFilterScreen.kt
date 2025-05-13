@@ -31,13 +31,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.consecutivepractice.viewmodels.GameFilterViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameFilterScreen(
-    viewModel: GameFilterViewModel = viewModel(),
+    viewModel: GameFilterViewModel = koinViewModel(),
     onBackClick: () -> Unit,
     onApplyFilters: (Float, String, Boolean) -> Unit
 ) {

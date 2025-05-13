@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,14 +23,12 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,22 +40,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.consecutivepractice.components.EmptyStateMessage
 import com.example.consecutivepractice.models.Developer
 import com.example.consecutivepractice.models.Game
 import com.example.consecutivepractice.viewmodels.GameViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun GamesScreen(
-    viewModel: GameViewModel = viewModel(),
+    viewModel: GameViewModel = koinViewModel(),
     onGameClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
     var showFilterScreen by remember { mutableStateOf(false) }
-
     if (showFilterScreen) {
         GameFilterScreen(
             onBackClick = { showFilterScreen = false },
@@ -74,11 +70,10 @@ fun GamesScreen(
                 onQueryChanged = viewModel::onSearchQueryChanged,
                 onFilterClick = { showFilterScreen = true },
             )
-
             when {
                 uiState.isLoading -> LoadingIndicator()
                 uiState.errorMessage != null -> ErrorMessage(uiState.errorMessage!!)
-                uiState.filteredGames.isEmpty() -> EmptyStateMessage("Игр не найдено")
+                uiState.filteredGames.isEmpty() -> NoGamesFoundMessage("Игр не найдено")
                 else -> GamesList(uiState.filteredGames, onGameClick, viewModel)
             }
         }
@@ -92,7 +87,6 @@ private fun SearchBar(
     onFilterClick: () -> Unit,
 ) {
     val shouldShowBadge by com.example.consecutivepractice.di.FilterBadgeCache.shouldShowBadge.collectAsState()
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,16 +113,13 @@ private fun SearchBar(
                 }
             }
         )
-
         Spacer(modifier = Modifier.width(8.dp))
-
         IconButton(onClick = onFilterClick) {
             Box {
                 Icon(
                     Icons.Default.FilterList,
                     contentDescription = "Фильтры"
                 )
-
                 if (shouldShowBadge) {
                     Box(
                         modifier = Modifier
@@ -144,23 +135,21 @@ private fun SearchBar(
 
 @Composable
 private fun LoadingIndicator() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
+    com.example.consecutivepractice.components.LoadingIndicator()
 }
 
 @Composable
 private fun ErrorMessage(message: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Error: $message")
-    }
+    EmptyStateMessage(
+        message = "Error: $message",
+    )
 }
 
 @Composable
-private fun EmptyStateMessage(message: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(message)
-    }
+private fun NoGamesFoundMessage(message: String) {
+    EmptyStateMessage(
+        message = message,
+    )
 }
 
 @Composable
@@ -181,42 +170,24 @@ private fun GamesList(games: List<Game>, onGameClick: (String) -> Unit, viewMode
 
 @Composable
 fun GameCard(game: Game, onClick: () -> Unit, viewModel: GameViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    val details = uiState.detailsCache[game.id]
+    val description = details?.description
+    val developers = details?.developers
+    val isLoading = uiState.loadingDetails.contains(game.id)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        var description by remember { mutableStateOf<String?>(null) }
-        var developers by remember { mutableStateOf<List<Developer>?>(null) }
-        var isLoadingDescription by remember { mutableStateOf(true) }
-        var isLoadingDevelopers by remember { mutableStateOf(true) }
-
-        LaunchedEffect(game.id) {
-            viewModel.getGameDescription(game.id) { desc ->
-                description = desc
-                isLoadingDescription = false
-            }
-
-            viewModel.getGameDevelopers(game.id) { devs ->
-                developers = devs
-                isLoadingDevelopers = false
-            }
-        }
-
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             GameHeader(game)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            GameDescription(description, isLoadingDescription)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            GameDeveloperInfo(developers, isLoadingDevelopers)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+            GameDescription(description, isLoading)
+            GameDeveloperInfo(developers, isLoading)
             GameFooter(game)
         }
     }
@@ -233,15 +204,12 @@ private fun GameHeader(game: Game) {
             contentDescription = null,
             modifier = Modifier.size(100.dp)
         )
-
         Spacer(modifier = Modifier.width(8.dp))
-
         Column {
             Text(
                 text = game.name,
                 style = MaterialTheme.typography.titleLarge
             )
-
             val platformsText = game.platforms?.joinToString(", ") { it.platform.name } ?: "Unknown"
             Text(
                 text = "Платформы: $platformsText",
@@ -276,7 +244,6 @@ private fun GameDeveloperInfo(developers: List<Developer>?, isLoading: Boolean) 
         developers.isNullOrEmpty() -> "Разработчик: Неизвестно"
         else -> "Разработчик: ${developers.joinToString(", ") { it.name }}"
     }
-
     Text(
         text = text,
         style = MaterialTheme.typography.bodySmall
@@ -293,7 +260,6 @@ private fun GameFooter(game: Game) {
             text = "Оценка: ${game.rating}",
             style = MaterialTheme.typography.bodySmall
         )
-
         Text(
             text = "Дата выхода: ${game.released ?: "N/A"}",
             style = MaterialTheme.typography.bodySmall
