@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_name">Class Notifications</string>
+    <string name="notification_channel_description">Notifications for upcoming classes</string>
+    <string name="notification_title">Время любимой пары</string>
+    <string name="notification_debug_title">Тестовое уведомление</string>
+    <string name="notification_debug_text">%s, это тестовое уведомление!</string>
+    <string name="notification_class_text">%s, ваша любимая пара в %s начинается</string>
+</resources>

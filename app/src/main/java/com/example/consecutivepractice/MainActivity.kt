@@ -25,8 +25,7 @@ import com.example.consecutivepractice.screens.FavoritesScreen
 import com.example.consecutivepractice.screens.GameDetailsScreen
 import com.example.consecutivepractice.screens.GamesScreen
 import com.example.consecutivepractice.screens.PlaceholderScreen
-import com.example.consecutivepractice.screens.ProfileEditScreen
-import com.example.consecutivepractice.screens.ProfileScreen
+import com.example.profile.navigation.profileGraph
 import com.example.consecutivepractice.ui.theme.ConsecutivePracticeTheme
 
 class MainActivity : ComponentActivity() {
@@ -79,23 +78,7 @@ fun NavGraph(navController: NavHostController) {
                     }
                 )
             }
-            composable(Screen.Profile.route) {
-                ProfileScreen(
-                    onEditClick = {
-                        navController.navigate(Screen.PROFILE_EDIT_ROUTE)
-                    }
-                )
-            }
-            composable(Screen.PROFILE_EDIT_ROUTE) {
-                ProfileEditScreen(
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
-                    onSaveComplete = {
-                        navController.popBackStack()
-                    }
-                )
-            }
+            profileGraph(navController)
             composable(Screen.Screen1.route) {
                 PlaceholderScreen(screenName = "Screen 1")
             }

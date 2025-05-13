@@ -1,4 +1,4 @@
-package com.example.consecutivepractice.viewmodels
+package com.example.profile.viewmodels
 
 import android.Manifest
 import android.content.Context
@@ -7,9 +7,9 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.consecutivepractice.models.UserProfile
-import com.example.consecutivepractice.notifications.NotificationHelper
-import com.example.consecutivepractice.repositories.ProfileRepository
+import com.example.profile.model.UserProfile
+import com.example.profile.notifications.NotificationHelper
+import com.example.profile.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

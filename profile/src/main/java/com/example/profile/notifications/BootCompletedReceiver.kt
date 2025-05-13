@@ -1,10 +1,10 @@
-package com.example.consecutivepractice.notifications
+package com.example.profile.notifications
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.example.consecutivepractice.repositories.ProfileRepository
+import com.example.profile.repository.ProfileRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
