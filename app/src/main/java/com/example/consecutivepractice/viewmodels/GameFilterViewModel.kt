@@ -1,7 +1,6 @@
 package com.example.consecutivepractice.viewmodels
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.consecutivepractice.repositories.FilterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,9 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class GameFilterViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = FilterRepository(application)
-
+class GameFilterViewModel(private val repository: FilterRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(FilterUiState())
     val uiState: StateFlow<FilterUiState> = _uiState.asStateFlow()
 
