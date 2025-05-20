@@ -10,13 +10,17 @@ import androidx.lifecycle.viewModelScope
 import com.example.consecutivepractice.models.UserProfile
 import com.example.consecutivepractice.notifications.NotificationHelper
 import com.example.consecutivepractice.repositories.ProfileRepository
+import com.example.consecutivepractice.di.AndroidContextProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ProfileEditViewModel(private val repository: ProfileRepository) : ViewModel() {
+class ProfileEditViewModel(
+    private val repository: ProfileRepository,
+    private val contextProvider: AndroidContextProvider
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileEditUiState())
     val uiState: StateFlow<ProfileEditUiState> = _uiState.asStateFlow()
@@ -213,7 +217,7 @@ class ProfileEditViewModel(private val repository: ProfileRepository) : ViewMode
             repository.saveProfile(updatedProfile)
 
             if (currentState.favoriteClassTime.isNotBlank()) {
-                repository.scheduleClassNotification(
+                scheduleClassNotification(
                     currentState.fullName,
                     currentState.favoriteClassTime
                 )
@@ -223,6 +227,12 @@ class ProfileEditViewModel(private val repository: ProfileRepository) : ViewMode
 
             onSuccess()
         }
+    }
+
+    fun scheduleClassNotification(fullName: String, classTime: String) {
+        val context = contextProvider.getApplicationContext()
+        val notificationHelper = NotificationHelper(context)
+        notificationHelper.scheduleClassNotification(fullName, classTime)
     }
 }
 

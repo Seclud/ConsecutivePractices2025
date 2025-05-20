@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import com.example.consecutivepractice.di.AndroidContextProvider
 import com.example.consecutivepractice.models.UserProfile
-import com.example.consecutivepractice.notifications.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -80,11 +79,6 @@ class ProfileRepository(private val contextProvider: AndroidContextProvider) {
         }
     }
 
-    fun scheduleClassNotification(fullName: String, classTime: String) {
-        val context = contextProvider.getApplicationContext()
-        val notificationHelper = NotificationHelper(context)
-        notificationHelper.scheduleClassNotification(fullName, classTime)
-    }
 
     companion object {
         private const val PROFILE_PREFERENCES = "profile_preferences"
